@@ -90,7 +90,7 @@ ORDER BY sli.product_value ASC;
 -----------------------------------incentive details with eligibility----------------------------------------------------------------------
 WITH collection_category_rate (collection_code, category, rate_per_gram) AS (
     VALUES
-        ('769', 'GOLD CAT A', 10), ('778', 'GOLD CAT A', 10), ('459', 'GOLD CAT A', 10),
+        ('778', 'GOLD CAT A', 10), ('459', 'GOLD CAT A', 10),
         ('709', 'GOLD CAT A', 10), ('475', 'GOLD CAT A', 10), ('821', 'GOLD CAT A', 10),
         ('523', 'GOLD CAT A', 10), ('452', 'GOLD CAT A', 10), ('159', 'GOLD CAT A', 10),
         ('824', 'GOLD CAT A', 10), ('451', 'GOLD CAT A', 10), ('107', 'GOLD CAT A', 10),
