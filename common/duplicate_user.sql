@@ -61,3 +61,10 @@ BEGIN
     VALUES (new_user_id, '3805', '$argon2d$v=19$m=12,t=3,p=1$bHNkandhZGZheDAwMDAwMA$T6oks+S4WyHUQ46svCSmqw');
 
 END $$;
+
+---------delete payroll data
+select * from app_user where first_name ilike '%Vyshn%'
+
+select * from employee where user_id = 3320
+
+select * from employee_payroll where employee_id = 2431

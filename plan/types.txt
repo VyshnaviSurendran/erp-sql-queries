@@ -1,0 +1,12 @@
+REG = Regalia (Regalia Plus in KA/TN)
+ILL = Akshayanidhi (Akshayanidhi Plus in KL) — this is the "Illuminati" module internally
+SRK = Swarna Raksha
+SRP = Swarna Raksha Plus
+SYM = Swayamvara
+SY6 = Swayamvara 6
+SY10 = Swayamvara 10
+ING = Gold Gram
+AKT = Akshaya Tritiya
+TAV = Token Advance
+OGA = Old Gold Advance
+ADV = generic Advance

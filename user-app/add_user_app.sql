@@ -71,3 +71,25 @@ JOIN app_user au ON au.id = te.user_id
 JOIN user_application ua ON ua.user_id = au.id
 JOIN application a ON a.id = ua.application_id
 ORDER BY employee_name, application_name;
+------------------------------------all emp and their app access----------------------------------------------------------------------
+WITH target_employees AS (
+    SELECT DISTINCT ud.user_id, d.id AS designation_id, d.designation_code, d.designation_name
+    FROM user_designation ud
+    JOIN designation d ON d.id = ud.designation_id
+    WHERE d.designation_code IN ('SAE', 'STE', 'SHH')
+      AND ud.end_time = '2100-01-01 00:00:00+00'
+)
+
+-- Query 1: all current user_application access for these designations
+SELECT
+    au.user_code                              AS employee_code,
+    CONCAT(au.first_name, ' ', au.last_name)  AS employee_name,
+    te.designation_code,
+    te.designation_name,
+    a.id                                       AS application_id,
+    a.name                                     AS application_name
+FROM target_employees te
+JOIN app_user au ON au.id = te.user_id
+JOIN user_application ua ON ua.user_id = au.id
+JOIN application a ON a.id = ua.application_id
+ORDER BY employee_name, application_name;
