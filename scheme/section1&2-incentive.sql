@@ -1,80 +1,3 @@
--- Kerala scheme-incentive summary, Section 1 -- Store Staff + the "Special
--- Roles" pair (Care RBA & Direct Calling CRE) shown alongside it in the same
--- doc image: one row per qualifying employee, covering the four schemes --
--- Regalia, Akshayanidhi, Swayamvara 06/10, Gold Gram. Rates are entirely
--- designation-specific (see designation_rates below). Later sections
--- (Marketing Staff, Managers, etc.) are out of scope here and will live in
--- their own companion files, per request to split by section.
---
--- Scheme -> table mapping (see plan_type enum), same tables/attribution as
--- the Karnataka report (reports/employee_scheme_incentive_karnataka.sql):
---   Regalia (REG) / Akshayanidhi (ILL) -> customer_plan + plan_regalia /
---     plan_illuminati (term amount) + plan_installment_regalia /
---     plan_installment_illuminati (payment history). Attribution uses
---     customer_plan.referral_user_id (an app_user FK) resolved to
---     employee -- NOT created_by_employee_id.
---   Swayamvara 06/10 / Gold Gram -> customer_advance +
---     customer_advance_installment. Attribution uses reference_user_id (an
---     app_user FK, resolved to employee the same way Regalia/Akshayanidhi's
---     referral_user_id is) -- confirmed per request, NOT
---     sales_person_employee_id (the Karnataka report's choice for this
---     scheme). These two columns can name different people -- reference_
---     user_id is who REFERRED the customer into the advance, vs sales_
---     person_employee_id being who actually sold it -- so for a role that's
---     normally the direct point-of-sale (e.g. Sales Executive), this may
---     under-count vs. sales_person_employee_id if that role's own direct
---     sales don't populate reference_user_id. Flag this if the intent was
---     actually to credit the seller, not the referrer.
---   Unlike Karnataka (where most roles are "Swayamvara 11"/SYM at Rs40/gram
---     and only Direct Calling CRE is "06/10"), EVERY role in this Kerala
---     doc image is labelled "Swayamvara 06/10" at Rs20/gram -- mapped here
---     to plan_type codes SY6 + SY10 for all eleven designations below.
---
--- Conditions applied (per the doc's designation-specific wording):
---   Store Staff (9 roles) + Direct Calling CRE: Regalia/Akshayanidhi require
---     >=2 payments after 90 days of the PLAN's own joined_at, and current
---     plan status = ACTIVE (the doc's footnote star for Store Staff;
---     Direct Calling CRE's own row in the Special Roles table restates the
---     identical condition: "Min. 2 payments after 90 days; plan active").
---     The reporting period filters on the plan's 90-day maturity date
---     (cp.joined_at + 90 days) -- a plan is counted in whichever month it
---     TURNS 90 days old, provided that AS OF WHEN THE REPORT IS RUN it
---     already has >=2 qualifying payments and is ACTIVE. This is NOT the
---     date the 2nd qualifying payment itself posts -- those two dates can
---     fall in different months (e.g. a plan turning 90 days old in June
---     but not accumulating its 2nd post-90-day payment until August is
---     still counted in June's report, confirmed).
---   Care RBA: Regalia/Akshayanidhi are "Same month of joining" -- confirmed
---     (consistent with this phrase's meaning elsewhere in these reports) to
---     mean no minimum-tenure/payment-count gate, paid from month one. No
---     plan-status condition is stated for this row either, so unlike the
---     gated roles above, ACTIVE status is NOT required here -- only that the
---     plan was opened (joined_at) within the reporting period. Flag this if
---     an active-status check was actually intended but just not written out.
---   Swayamvara: no gating filter for any of the eleven roles -- Store
---     Staff's doc entry states no condition; Care RBA and Direct Calling
---     CRE both say "Same month of joining", same no-minimum-tenure meaning
---     as above.
---   Gold Gram: "6 months of joining" is the SCHEME's own joined_at
---     (customer_advance.joined_at) -- the scheme must have been running
---     >=6 months as of today, and its current status = ACTIVE (CLOSED, or
---     any other non-active status, excluded). Same formula for all eleven
---     roles. Note this still filters ca.joined_at against the reporting
---     period for scoping which plans are considered at all, separate from
---     the 6-month maturity check on that same column.
---
--- Employees are scoped by their CURRENT designation and CURRENT branch's
--- state (not the branch/designation at the time each plan was sold), same
--- design choice as the Karnataka report.
---
--- Edit before running:
---   - designation_rates: several roles have no designation_code yet --
---     kept as name-matched placeholders per request, so they'll simply
---     match 0 employees until each designation exists: Scheme CRE,
---     Accountants, Pantry/Maintenance/Cleaning, Regal Care, Direct Calling
---     CRE.
---   - the period WHERE clauses in each *_agg / *_plans CTE
-
 WITH designation_rates (
     designation_code, designation_name, section,
     regalia_rate_pct, illuminati_rate_pct, swayamvara_rate_per_gram, gold_gram_rate_pct,
@@ -92,8 +15,17 @@ WITH designation_rates (
         (NULL,  'Regal Care',                         'STORE',   0.10, 0.05, 20, 0.01, ARRAY['SY6', 'SY10'], 'GATED_90D'), -- no designation_code yet, name-matched placeholder
 
         -- Special Roles -- Care RBA & Direct Calling CRE
-        ('CRB', 'Care RBA',                           'SPECIAL', 0.20, 0.20, 20, 0.01, ARRAY['SY6', 'SY10'], 'SAME_MONTH'),
-        (NULL,  'Direct Calling CRE',                 'SPECIAL', 0.05, 0.05, 20, 0.01, ARRAY['SY6', 'SY10'], 'GATED_90D')  -- no designation_code yet, name-matched placeholder
+        ('CRB', 'Care RBA',                           'SPECIAL', 0.20, 0.20, 20,   0.01, ARRAY['SY6', 'SY10'], 'SAME_MONTH'),
+        (NULL,  'Direct Calling CRE',                 'SPECIAL', 0.05, 0.05, 20,   0.01, ARRAY['SY6', 'SY10'], 'GATED_90D'), -- no designation_code yet, name-matched placeholder
+
+        -- Section 2 -- Marketing Staff. Swayamvara/Gold Gram are NULL for
+        -- the first four roles ("Closing Weight" in the doc, no rate given
+        -- -- see header note); Marketing Swayamvara CRE has real rates.
+        ('AMM', 'Asst Marketing Manager',             'MARKETING', 0.07, 0.07, NULL, NULL, ARRAY['SY6', 'SY10'], 'GATED_90D'),
+        ('ZOE', 'Zonal Manager',                       'MARKETING', 0.05, 0.05, NULL, NULL, ARRAY['SY6', 'SY10'], 'GATED_90D'),
+        (NULL,  'Marketing CRE',                       'MARKETING', 0.05, 0.05, NULL, NULL, ARRAY['SY6', 'SY10'], 'GATED_90D'),  -- no designation_code yet, name-matched placeholder
+        ('RBA', 'RBA',                                 'MARKETING', 0.05, 0.05, NULL, NULL, ARRAY['SY6', 'SY10'], 'GATED_90D'),
+        (NULL,  'Marketing Swayamvara CRE',            'MARKETING', 0.05, 0.05, 20,   0.01, ARRAY['SY6', 'SY10'], 'GATED_90D')  -- no designation_code yet, name-matched placeholder
 ),
 eligible_employees AS (
     SELECT
@@ -270,10 +202,9 @@ gold_gram_plans AS (
         AND cas.end_time = '2100-01-01 00:00:00+00'
     JOIN eligible_employees ee ON ee.app_user_id = ca.reference_user_id
     WHERE ca.advance_type = 'ING'
-      AND ca.joined_at >= '2026-08-01'   -- period start, edit as needed
-      AND ca.joined_at <  '2026-09-01'   -- period end, edit as needed
       AND cas.status = 'ACTIVE'
-      AND ca.joined_at <= CURRENT_DATE - INTERVAL '6 months'
+      AND ca.joined_at + INTERVAL '6 months' >= '2026-08-01'   -- period start: month the scheme turns 6 months old, edit as needed
+      AND ca.joined_at + INTERVAL '6 months' <  '2026-09-01'   -- period end, edit as needed
 ),
 gold_gram_agg AS (
     SELECT
